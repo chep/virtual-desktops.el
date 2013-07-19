@@ -137,7 +137,7 @@
 	 (setq virtual-desktops-list (list nil))
 	 (setq virtual-desktops-current 0)
 	 (if virtual-desktops-mode
-		 (setq virtual-desktops-mode-line-string " (Desk: nil) ")
+		 (setq virtual-desktops-mode-line-string " (D nil) ")
 	     (setq virtual-desktops-mode-line-string ""))
 	 (or global-mode-string
 		 (setq global-mode-string '("")))
@@ -405,8 +405,8 @@
 
 (defun virtual-desktops-update-mode-line ()
   (if (= virtual-desktops-current 0)
-	  (setq virtual-desktops-mode-line-string " (Desk: nil) ")
-	  (setq virtual-desktops-mode-line-string (concat " (Desk: " (number-to-string virtual-desktops-current) ") ")))
+	  (setq virtual-desktops-mode-line-string " (D nil) ")
+	  (setq virtual-desktops-mode-line-string (concat " (D " (number-to-string virtual-desktops-current) ") ")))
   (force-mode-line-update)
 )
 

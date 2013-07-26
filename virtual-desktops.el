@@ -133,9 +133,11 @@
 
 
 (defun virtual-desktops-restore (number)
-  (set-window-configuration (nth number virtual-desktops-list)))
+  (let ((desktop (nth number virtual-desktops-list)))
+	(when desktop
+	  (set-window-configuration desktop))))
 
-(defun virtual-desktops-create-desktop ()
+(Defun virtual-desktops-create-desktop ()
   (current-window-configuration))
 
 ;;delete a desktop if it is not the nil desktop

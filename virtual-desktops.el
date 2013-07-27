@@ -137,7 +137,7 @@
 	(when desktop
 	  (set-window-configuration desktop))))
 
-(Defun virtual-desktops-create-desktop ()
+(defun virtual-desktops-create-desktop ()
   (current-window-configuration))
 
 ;;delete a desktop if it is not the nil desktop

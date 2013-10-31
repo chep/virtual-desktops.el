@@ -1,4 +1,5 @@
-;;; virtual-desktops.el --- allows you to save/restore a frame configuration: windows and buffers.
+;;; virtual-desktops.el --- allows you to save/restore a frame configuration:
+;;  windows and buffers.
 ;;
 ;; Filename: virtual-desktops.el
 ;; Description: allows you to save/retore a frame configuration: windows and buffers.
@@ -19,18 +20,26 @@
 ;;
 ;;
 ;; Keys and interactive functions:
-;; virtual-desktops-add:             save current configuration in a new virtual desktop and select it (C-c C-d a)
-;; virtual-desktops-delete:          delete current desktop and select the nil desktop (C-c C-d d)
-;; virtual-desktops-delete-specific: delete a specific desktop and select the nil desktop if you choose current desktop (C-c C-d D)
+;; virtual-desktops-add:             save current configuration in a new virtual
+;;                                   desktop and select it (C-c C-d a). Use
+;;                                   prefix argument to create several desktops.
+;; virtual-desktops-delete:          delete current desktop and select the nil
+;;                                   desktop (C-c C-d d)
+;; virtual-desktops-delete-specific: delete a specific desktop and select the
+;;                                   nil desktop if you choose current
+;;                                   desktop (C-c C-d D)
 ;; virtual-desktops-goto:            restore a specific desktop (C-c C-d g)
 ;; virtual-desktops-next:            go to next desktop (C->)
 ;; virtual-desktops-previous:        go to previous desktop (C-<)
 ;; virtual-desktops-list:            list all desktops (C-c C-d l)
-;; virtual-desktops-update:          save current configuration in current desktop
+;; virtual-desktops-update:          save current configuration in current
+;;                                   desktop
 ;;
 ;;
 ;; Variables:
-;; virtual-desktops-auto-update: if non nil, current desktop will be updated before execution of virtual-desktops-next, virtual-desktops-prev, virtual-desktops-goto
+;; virtual-desktops-auto-update: if non nil, current desktop will be updated
+;; before execution of virtual-desktops-next, virtual-desktops-prev and
+;; virtual-desktops-goto
 ;;
 ;;
 ;;
@@ -160,12 +169,15 @@
 ;;								Interactive functions									;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defun virtual-desktops-add ()
-  (interactive)
+(defun virtual-desktops-add (nb-desktops)
+  (interactive "P")
   (if virtual-desktops-mode
 	  (progn (setq virtual-desktops-list (append virtual-desktops-list (list (virtual-desktops-create-desktop))))
 			 (setq virtual-desktops-current (1- (safe-length virtual-desktops-list)))
-			 (virtual-desktops-update-mode-line))
+			 (virtual-desktops-update-mode-line)
+             (when (and (integerp nb-desktops)
+                        (> nb-desktops 1))
+               (virtual-desktops-add (1- nb-desktops))))
 	  (message "virtual-desktops-mode must be enabled"))
 )
 
@@ -255,11 +267,11 @@
 			   ;;killing buffer if it exists
 			   (if (not (equal nil (get-buffer virtual-desktops-list-buffer-name)))
 				   (kill-buffer virtual-desktops-list-buffer-name))
-	
+
 			   ;;creating buffer
 			   (setq buffer (get-buffer-create virtual-desktops-list-buffer-name))
 			   (switch-to-buffer buffer)
-	
+
 			   ;;insert desktop list
 			   (insert "This is desktop list\nYou can set point on the desired one and press RET to switch to this desktop\n\n")
 			   (setq i 0)
@@ -278,7 +290,7 @@
 					   (insert "> "))))
 				 (insert "\n\n")
 				 (setq i (1+ i)))
-	
+
 			   ;;setting buffer read only
 			   (read-only-mode)))
 			 (message "virtual-desktops-mode must be enabled"))

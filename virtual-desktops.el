@@ -273,24 +273,9 @@
 			   (switch-to-buffer buffer)
 
 			   ;;insert desktop list
-			   (insert "This is desktop list\nYou can set point on the desired one and press RET to switch to this desktop\n\n")
-			   (setq i 0)
-			   (while (< i (safe-length virtual-desktops-list))
-				 (insert (propertize (number-to-string i) 'font-lock-face '(:foreground "red")))
-				 (insert "\t")
-				 (let (window window-list)
-				   (setq window-list (nth i virtual-desktops-list))
-				   (if (equal window-list nil)
-					   (insert "nil")
-					 (dolist (window window-list)
-					   (insert "<")
-					   (if (equal nil (buffer-name (virtual-desktops-get-window-buffer window)))
-						   (insert "Deleted buffer")
-						 (insert (buffer-name (virtual-desktops-get-window-buffer window))))
-					   (insert "> "))))
-				 (insert "\n\n")
-				 (setq i (1+ i)))
-
+               (insert "GNU Emacs Lisp Reference Manual: Primitives to look inside of window
+configurations would make sense, but none are implemented. It is not clear they
+are useful enough to be worth implementing.")
 			   ;;setting buffer read only
 			   (read-only-mode)))
 			 (message "virtual-desktops-mode must be enabled"))

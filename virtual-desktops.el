@@ -74,7 +74,6 @@
 ;; TODO
 ;;
 ;; list buffer must be interactive
-;; don't save desktop when using a new frame
 ;;
 ;;
 ;;
@@ -109,6 +108,7 @@
 (defvar virtual-desktops-list (list nil))
 (defvar virtual-desktops-current 0)
 (defvar virtual-desktops-mode-line-string nil)
+(defvar virtual-desktops-last-frame nil)
 
 ;;group
 (defgroup virtual-desktop nil "Customization of virtual-desktop variables."
@@ -344,7 +344,8 @@
 
         ;;let's split windows
         (virtual-desktops-split-block (cdr window-listv))
-        (select-window (window-at (car select) (nth 1 select)))))))
+        (select-window (window-at (car select) (nth 1 select))))
+      (setq virtual-desktops-last-frame (selected-frame)))))
 
 
 ;;delete a desktop if it is not the nil desktop
@@ -363,6 +364,13 @@
   (force-mode-line-update)
 )
 
+(defun virtual-desktops-update-if-needed ()
+  (when (and virtual-desktops-auto-update
+             (or (equal nil virtual-desktops-last-frame)
+                 (equal (selected-frame) virtual-desktops-last-frame)))
+    (virtual-desktops-update)))
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;								Interactive functions									;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -372,6 +380,7 @@
   (if virtual-desktops-mode
 	  (progn (setq virtual-desktops-list (append virtual-desktops-list (list (virtual-desktops-create-desktop))))
 			 (setq virtual-desktops-current (1- (safe-length virtual-desktops-list)))
+             (setq virtual-desktops-last-frame (selected-frame))
 			 (virtual-desktops-update-mode-line)
              (when (and (integerp nb-desktops)
                         (> nb-desktops 1))
@@ -384,17 +393,17 @@
   (interactive)
   (if virtual-desktops-mode
 	  (progn (if (not (= virtual-desktops-current 0))
-				 (let (desktop)
-				   (setq desktop (virtual-desktops-create-desktop))
+				 (let ((desktop (virtual-desktops-create-desktop)))
+                   (setq virtual-desktops-last-frame (selected-frame))
 				   (setcar (nthcdr virtual-desktops-current virtual-desktops-list) desktop))))
-  	  (message "virtual-desktops-mode must be enabled"))
-)
+  	  (message "virtual-desktops-mode must be enabled")))
 
 (defun virtual-desktops-del ()
   (interactive)
     (if virtual-desktops-mode
 		(progn (virtual-desktops-delete virtual-desktops-current)
 			   (setq virtual-desktops-current 0)
+                   (setq virtual-desktops-last-frame (selected-frame))
 			   (virtual-desktops-update-mode-line))
 	    (message "virtual-desktops-mode must be enabled"))
 )
@@ -415,8 +424,7 @@
   (interactive)
   (if virtual-desktops-mode
 	  (if (not (active-minibuffer-window))
-		  (progn (if (not (equal nil virtual-desktops-auto-update))
-					 (virtual-desktops-update))
+		  (progn (virtual-desktops-update-if-needed)
 				 (setq virtual-desktops-current (1+ virtual-desktops-current))
 				 (if (>= virtual-desktops-current (safe-length virtual-desktops-list))
 					 (setq virtual-desktops-current 0))
@@ -430,8 +438,7 @@
   (interactive)
   (if virtual-desktops-mode
 	  (if (not (active-minibuffer-window))
-		  (progn (if (not (equal nil virtual-desktops-auto-update))
-					 (virtual-desktops-update))
+		  (progn (virtual-desktops-update-if-needed)
 				 (setq virtual-desktops-current (1- virtual-desktops-current))
 				 (if (< virtual-desktops-current 0)
 					 (setq virtual-desktops-current (1- (safe-length virtual-desktops-list))))
@@ -445,8 +452,7 @@
   (interactive)
   (if virtual-desktops-mode
 	  (if (not (active-minibuffer-window))
-		  (progn (if (not (equal nil virtual-desktops-auto-update))
-					 (virtual-desktops-update))
+		  (progn (virtual-desktops-update-if-needed)
 				 (let (desktop number)
 				   (setq desktop (read-from-minibuffer "desktop to display? "))
 				   (if (equal "nil" desktop)

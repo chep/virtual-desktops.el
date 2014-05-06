@@ -74,12 +74,28 @@
 ;; TODO
 ;;
 ;; list buffer must be interactive
-;; make current desktop frame specific
+;; don't save desktop when using a new frame
 ;;
 ;;
 ;;
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; desktop:
+;; (frame-size window-list selected-window)
+
+;; frame-size:
+;; (w h)
+
+;; window-list:
+;; (window0 window1 ...)
+;; window0 = minibuffer
+
+;; window
+;; (buffer window-edges)
+
+;; selected window = int
 
 
 ;; Code:
@@ -141,13 +157,195 @@
 )
 
 
-(defun virtual-desktops-restore (number)
-  (let ((desktop (nth number virtual-desktops-list)))
-	(when desktop
-	  (set-window-configuration desktop))))
+(defun virtual-desktops-get-window-xmin (window)
+  (nth 0 (nth 1 window)))
+
+(defun virtual-desktops-get-window-xmax (window)
+  (nth 2 (nth 1 window)))
+
+(defun virtual-desktops-get-window-ymin (window)
+  (nth 1 (nth 1 window)))
+
+(defun virtual-desktops-get-window-ymax (window)
+  (nth 3 (nth 1 window)))
+
+(defun virtual-desktops-get-window-buffer (window)
+  (car window))
+
+(defun virtual-desktops-get-window-width (window)
+  (- (virtual-desktops-get-window-xmax window) (virtual-desktops-get-window-xmin window))
+)
+
+(defun virtual-desktops-get-window-height (window)
+  (- (virtual-desktops-get-window-ymax window) (virtual-desktops-get-window-ymin window))
+)
+
+;; returns (block-xmin block-ymin block-xmax block-ymax block-width block-height)
+(defun virtual-desktops-get-block-dimensions (block)
+  (let (block-xmin block-ymin block-xmax block-ymax block-width block-height)
+	(dolist (window block)
+	  (progn (if (or (equal nil block-xmin)
+					 (< (virtual-desktops-get-window-xmin window) block-xmin))
+				 (setq block-xmin (virtual-desktops-get-window-xmin window)))
+			 (if (or (equal nil block-xmax)
+					 (> (virtual-desktops-get-window-xmax window) block-xmax))
+				 (setq block-xmax (virtual-desktops-get-window-xmax window)))
+			 (if (or (equal nil block-ymin)
+					 (< (virtual-desktops-get-window-ymin window) block-ymin))
+				 (setq block-ymin (virtual-desktops-get-window-ymin window)))
+			 (if (or (equal nil block-ymax)
+					 (> (virtual-desktops-get-window-ymax window) block-ymax))
+				 (setq block-ymax (virtual-desktops-get-window-ymax window)))))
+	(setq block-width (- block-xmax block-xmin))
+	(setq block-height (- block-ymax block-ymin))
+
+	(list block-xmin block-ymin block-xmax block-ymax block-width block-height))
+)
+
+(defun virtual-desktops-get-window (x y window-list)
+  (let ((window nil))
+	(catch 'break;
+	  (dolist (w window-list)
+		(if (and (>= x (virtual-desktops-get-window-xmin w))
+                 (<= x (virtual-desktops-get-window-xmax w))
+                 (>= y (virtual-desktops-get-window-ymin w))
+                 (<= y (virtual-desktops-get-window-ymax w)))
+            (progn (setq window w)
+                   (throw 'break t)))))
+	window))
+
+
+(defun virtual-desktops-split-block-vertically (block)
+  (let* ((dimensions (virtual-desktops-get-block-dimensions block))
+         (block-xmin (nth 0 dimensions))
+         (block-ymin (nth 1 dimensions))
+         (block-xmax (nth 2 dimensions))
+         (block-ymax (nth 3 dimensions))
+         (block-width (nth 4 dimensions))
+         (block-height (nth 5 dimensions)))
+
+    ;;select window to split
+    (select-window (window-at block-xmin block-ymin))
+
+    (let ((y (1+ block-ymin)))
+      (catch 'break
+        (while (< y block-ymax)
+          (let* ((w-current (virtual-desktops-get-window block-xmin y block))
+                 (total-width (virtual-desktops-get-window-width w-current)))
+            (dolist (w-temp block) ;;check all windows
+              (unless (equal w-temp w-current) ;;if x-temp is not current windows
+                (when (= (virtual-desktops-get-window-ymax w-temp)
+                         (virtual-desktops-get-window-ymax w-current)) ;; windows have same bottom
+                  (setq total-width (+ total-width
+                                       (virtual-desktops-get-window-width w-temp)))))) ;;add window width to total
+            (when (>= total-width block-width) ;;we can split
+              (setq y (+ y (virtual-desktops-get-window-height w-current))) ;; we split here
+              (throw 'break t))
+            (setq y (+ y (virtual-desktops-get-window-height w-current)))))) ;;next window
+
+      ;;if we found a split, we split and return 2 blocks
+      (if (< y block-ymax)
+          (let (block-1 block-2)
+            (split-window-vertically (1- (- y block-ymin)))
+            (dolist (w block)
+              (if (< (virtual-desktops-get-window-ymax w) y)
+                  (setq block-1 (cons w block-1))
+                (setq block-2 (cons w block-2))))
+            (list block-1 block-2))
+	    nil))))
+
+(defun virtual-desktops-split-block-horizontally (block)
+  (let* ((dimensions (virtual-desktops-get-block-dimensions block))
+         (block-xmin (nth 0 dimensions))
+         (block-ymin (nth 1 dimensions))
+         (block-xmax (nth 2 dimensions))
+         (block-ymax (nth 3 dimensions))
+         (block-width (nth 4 dimensions))
+         (block-height (nth 5 dimensions)))
+
+    ;;select window to split
+    (select-window (window-at block-xmin block-ymin))
+
+    (let ((x (1+ block-xmin)))
+      (catch 'break
+        (while (< x block-xmax)
+          (let* ((w-current (virtual-desktops-get-window x block-ymin block))
+                 (total-height (virtual-desktops-get-window-height w-current)))
+            (dolist (w-temp block) ;;check all windows
+              (unless (equal w-temp w-current) ;;if x-temp is not current windows
+                (when (= (virtual-desktops-get-window-xmax w-temp)
+                         (virtual-desktops-get-window-xmax w-current)) ;; windows have same right side
+                  (setq total-height (+ total-height
+                                       (virtual-desktops-get-window-height w-temp)))))) ;;add window height to total
+            (when (>= total-height block-height) ;;we can split
+              (setq x (+ x (virtual-desktops-get-window-width w-current))) ;; we split here
+              (throw 'break t))
+            (setq x (+ x (virtual-desktops-get-window-width w-current)))))) ;;next window
+
+      ;;if we found a split, we split and return 2 blocks
+      (if (< x block-xmax)
+          (let (block-1 block-2)
+            (split-window-horizontally (1- (- x block-xmin)))
+            (dolist (w block)
+              (if (< (virtual-desktops-get-window-xmax w) x)
+                  (setq block-1 (cons w block-1))
+                (setq block-2 (cons w block-2))))
+            (list block-1 block-2))
+	    nil))))
+
+(defun virtual-desktops-split-block (block)
+  (if (> (safe-length block) 1)
+      (let ((result (virtual-desktops-split-block-vertically block)))
+        (unless result
+          (setq result (virtual-desktops-split-block-horizontally block)))
+        (if result
+            (progn (virtual-desktops-split-block (car result))
+                   (virtual-desktops-split-block (nth 1 result)))
+          (error "No split found")))
+    (let* ((w (car block)) ;;only one window in list, setting buffer.
+           (edges (nth 1 w)))
+      (set-window-buffer (window-at (nth 0 edges) (nth 1 edges))
+                         (car w)))))
+
+
 
 (defun virtual-desktops-create-desktop ()
-  (current-window-configuration))
+  (let ((frame nil)
+        (window-listv nil))
+    (setq frame (list (frame-width) (frame-height)))
+
+    ;;for each window, starting with minibuffer
+    (dolist (window (window-list (selected-frame) t (minibuffer-window)))
+      (setq window-listv (cons (list (window-buffer window) (window-edges window)) window-listv)))
+
+  (list frame                              ;;frame
+        (reverse window-listv)             ;;windows
+        (list (nth 0 (window-edges))       ;;selected window x
+              (nth 1 (window-edges))))))   ;;selected window y
+
+;;restore the desired desktop
+(defun virtual-desktops-restore (number)
+  (let ((desktop (nth number virtual-desktops-list)))
+    (when desktop
+      (let ((frame (car desktop))
+            (window-listv (nth 1 desktop))
+            (select (nth 2 desktop)))
+        ;;resize frame
+        (set-frame-size (selected-frame) (car frame) (nth 1 frame))
+
+        ;;delete all windows
+        (delete-other-windows)
+
+        ;;resize minibuffer
+        (let ((mini (minibuffer-window))
+              (mini-edges (nth 1 (car window-listv))))
+          (window-resize mini (- (- (nth 3 mini-edges) (nth 1 mini-edges))
+                                 (window-height mini))))
+
+        ;;let's split windows
+        (virtual-desktops-split-block (cdr window-listv))
+        (select-window (window-at (car select) (nth 1 select)))))))
+
 
 ;;delete a desktop if it is not the nil desktop
 (defun virtual-desktops-delete (number)

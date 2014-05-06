@@ -5,11 +5,9 @@
 ;; Description: allows you to save/retore a frame configuration: windows and buffers.
 ;; Author: Cédric Chépied <cedric.chepied@gmail.com>
 ;; Maintainer: Cédric Chépied
-;; Copyright (C) 2012, Cédric Chépied
-;; Last updated: Wed Jul  4 17:47:07 UTC
+;; Copyright (C) 2012 - 2014, Cédric Chépied
+;; Last updated: Tue May 6th 16:45:46 CEST 2014
 ;;     By Cédric Chépied
-;;     Update 1
-;; Keywords: virtual, desktop
 ;;
 ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -60,7 +58,7 @@
 ;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth
 ;; Floor, Boston, MA 02110-1301, USA.
 ;;
-;; Copyright Cédric Chépied 2012
+;; Copyright Cédric Chépied 2012 - 2014
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;

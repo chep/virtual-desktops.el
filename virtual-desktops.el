@@ -33,7 +33,7 @@
 ;; virtual-desktops-previous:        go to previous desktop (C-<)
 ;; virtual-desktops-list:            list all desktops (C-c C-d l)
 ;; virtual-desktops-update:          save current configuration in current
-;;                                   desktop
+;;                                   desktop (C-c C-d u)
 ;;
 ;;
 ;; Variables:
@@ -95,18 +95,28 @@
 ;; selected window = int
 
 
-;; Code:
-
 (provide 'virtual-desktops)
 
 ;;constants
 (defconst virtual-desktops-list-buffer-name "##virtual-desktops##")
+
 
 ;;global variables
 (defvar virtual-desktops-list (list nil))
 (defvar virtual-desktops-current 0)
 (defvar virtual-desktops-mode-line-string nil)
 (defvar virtual-desktops-last-frame nil)
+(defvar virtual-desktops-list-keymap
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "RET") (lambda () (interactive)
+                                  (virtual-desktops-goto (tabulated-list-get-id) t)))
+
+    (define-key map (kbd "D") (lambda () (interactive)
+                                (virtual-desktops-del-specific (tabulated-list-get-id))))
+
+    map)
+  "Keymap for `virtual-desktops-list-mode'.")
+
 
 ;;group
 (defgroup virtual-desktop nil "Customization of virtual-desktop variables."
@@ -136,6 +146,7 @@
   	(,(kbd "C-c C-d D") . virtual-desktops-del-specific)
   	(,(kbd "C-c C-d g") . virtual-desktops-goto)
   	(,(kbd "C-c C-d l") . virtual-desktops-list)
+  	(,(kbd "C-c C-d u") . virtual-desktops-update)
    )
    ;; Make mode global rather than buffer local
    :global 1
@@ -154,14 +165,6 @@
 			   (append global-mode-string '(virtual-desktops-mode-line-string)))))
 )
 
-(defvar virtual-desktops-list-keymap
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "RET") 'virtual-desktops-goto-entry)
-    (define-key map (kbd "D") 'virtual-desktops-delete-entry)
-    map)
-  "Keymap for `virtual-desktops-list-mode'.")
-
-
 ;; Major mode for desktop list buffer
 (define-derived-mode virtual-desktops-list-mode
   tabulated-list-mode
@@ -173,6 +176,11 @@
   (use-local-map (append tabulated-list-mode-map
                          virtual-desktops-list-keymap)))
 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;								  Internal functions									;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun virtual-desktops-get-window-xmin (window)
   "Return the x coordinate of top left corner of the window."
@@ -542,15 +550,5 @@ virtual-desktops-auto-update is set."
         (virtual-desktops-list-mode)
         (tabulated-list-print t))
     (message "virtual-desktops-mode must be enabled")))
-
-(defun virtual-desktops-goto-entry ()
-  "In desktop list buffer, goto desktop at point."
-  (interactive)
-  (virtual-desktops-goto (tabulated-list-get-id) t))
-
-(defun virtual-desktops-delete-entry ()
-  "In desktop list buffer, delete desktop at point."
-  (interactive)
-  (virtual-desktops-del-specific (tabulated-list-get-id)))
 
 ;;virtual-desktops.el ends here

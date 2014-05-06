@@ -73,8 +73,6 @@
 ;;
 ;; TODO
 ;;
-;; list buffer must be interactive
-;;
 ;;
 ;;
 ;;
@@ -155,6 +153,25 @@
 		 (setq global-mode-string
 			   (append global-mode-string '(virtual-desktops-mode-line-string)))))
 )
+
+(defvar virtual-desktops-list-keymap
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "RET") 'virtual-desktops-goto-entry)
+    (define-key map (kbd "D") 'virtual-desktops-delete-entry)
+    map)
+  "Keymap for `virtual-desktops-list-mode'.")
+
+
+;; Major mode for desktop list buffer
+(define-derived-mode virtual-desktops-list-mode
+  tabulated-list-mode
+  "Desktop list" "Mode for listing virtual desktops"
+  (setq tabulated-list-format [("Id" 5 t)
+                               ("Buffers" 0 nil)])
+  (setq tabulated-list-entries 'virtual-desktops-list-entries)
+  (tabulated-list-init-header)
+  (use-local-map (append tabulated-list-mode-map
+                         virtual-desktops-list-keymap)))
 
 
 (defun virtual-desktops-get-window-xmin (window)
@@ -370,6 +387,24 @@
                  (equal (selected-frame) virtual-desktops-last-frame)))
     (virtual-desktops-update)))
 
+(defun virtual-desktops-insert-desktop-buffer (desktop list-entries number)
+  (let ((buffer-list "| "))
+    (dolist (w (cdr (nth 1 desktop)))
+        (setq buffer-list (concat buffer-list
+                                  (buffer-name (car w))
+                                  " | ")))
+    (append list-entries
+            (list (list number (vector (number-to-string number) buffer-list))))))
+
+(defun virtual-desktops-list-entries ()
+  (let ((list-entries (list (list 0 ["0" "nil"])))
+        (num 1))
+    (dolist (d (cdr virtual-desktops-list))
+      (setq list-entries (virtual-desktops-insert-desktop-buffer d list-entries num))
+      (setq num (1+ num)))
+    list-entries))
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;								Interactive functions									;;
@@ -403,22 +438,26 @@
     (if virtual-desktops-mode
 		(progn (virtual-desktops-delete virtual-desktops-current)
 			   (setq virtual-desktops-current 0)
-                   (setq virtual-desktops-last-frame (selected-frame))
+               (setq virtual-desktops-last-frame (selected-frame))
 			   (virtual-desktops-update-mode-line))
 	    (message "virtual-desktops-mode must be enabled"))
 )
 
-(defun virtual-desktops-del-specific ()
-  (interactive)
+(defun virtual-desktops-del-specific (desktop)
+  (interactive "Ndesktop to delete: ")
   (if virtual-desktops-mode
-	  (progn (let (desktop)
-			   (setq desktop (read-from-minibuffer "desktop to delete? "))
-			   (virtual-desktops-delete (string-to-number desktop))
-			   (if (= virtual-desktops-current (string-to-number desktop))
-				   (setq virtual-desktops-current 0)))
-			 (virtual-desktops-update-mode-line))
-	  (message "virtual-desktops-mode must be enabled"))
-)
+      (when (and (< desktop (safe-length virtual-desktops-list))
+                 (yes-or-no-p (concat "Really delete desktop "
+                                      (number-to-string desktop)
+                                      "? ")))
+        (virtual-desktops-delete desktop)
+        (if (= virtual-desktops-current desktop)
+            (setq virtual-desktops-current 0)
+          (when (> virtual-desktops-current desktop)
+            (setq virtual-desktops-current (1- virtual-desktops-current))))
+        (setq virtual-desktops-last-frame (selected-frame))
+        (virtual-desktops-update-mode-line))
+    (message "virtual-desktops-mode must be enabled")))
 
 (defun virtual-desktops-next ()
   (interactive)
@@ -448,41 +487,32 @@
 	  (message "virtual-desktops-mode must be enabled"))
 )
 
-(defun virtual-desktops-goto ()
-  (interactive)
+(defun virtual-desktops-goto (number &optional dont-update)
+  (interactive "Ndesktop to display: ")
   (if virtual-desktops-mode
 	  (if (not (active-minibuffer-window))
-		  (progn (virtual-desktops-update-if-needed)
-				 (let (desktop number)
-				   (setq desktop (read-from-minibuffer "desktop to display? "))
-				   (if (equal "nil" desktop)
-					   (setq number 0)
-					   (setq number (string-to-number desktop)))
-				   (setq virtual-desktops-current number))
+		  (progn (unless dont-update
+                   (virtual-desktops-update-if-needed))
+                 (setq virtual-desktops-current number)
 				 (virtual-desktops-restore virtual-desktops-current)
 				 (virtual-desktops-update-mode-line)))
-	  (message "virtual-desktops-mode must be enabled"))
-)
+	  (message "virtual-desktops-mode must be enabled")))
 
 (defun virtual-desktops-list ()
   (interactive)
   (if virtual-desktops-mode
-	  (progn (let (buffer i)
-			   ;;killing buffer if it exists
-			   (if (not (equal nil (get-buffer virtual-desktops-list-buffer-name)))
-				   (kill-buffer virtual-desktops-list-buffer-name))
+	  (let ((buffer (get-buffer-create virtual-desktops-list-buffer-name)))
+        (switch-to-buffer buffer)
+        (virtual-desktops-list-mode)
+        (tabulated-list-print t))
+    (message "virtual-desktops-mode must be enabled")))
 
-			   ;;creating buffer
-			   (setq buffer (get-buffer-create virtual-desktops-list-buffer-name))
-			   (switch-to-buffer buffer)
+(defun virtual-desktops-goto-entry ()
+  (interactive)
+  (virtual-desktops-goto (tabulated-list-get-id) t))
 
-			   ;;insert desktop list
-               (insert "GNU Emacs Lisp Reference Manual: Primitives to look inside of window
-configurations would make sense, but none are implemented. It is not clear they
-are useful enough to be worth implementing.")
-			   ;;setting buffer read only
-			   (read-only-mode)))
-			 (message "virtual-desktops-mode must be enabled"))
-)
+(defun virtual-desktops-delete-entry ()
+  (interactive)
+  (virtual-desktops-del-specific (tabulated-list-get-id)))
 
 ;;virtual-desktops.el ends here

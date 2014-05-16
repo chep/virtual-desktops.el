@@ -344,9 +344,11 @@ Window buffers are set."
                    (virtual-desktops-split-block (nth 1 result)))
           (error "No split found")))
     (let* ((w (car block)) ;;only one window in list, setting buffer.
-           (edges (nth 1 w)))
-      (set-window-buffer (window-at (nth 0 edges) (nth 1 edges))
-                         (car w)))))
+           (edges (nth 1 w))
+           (buffer (car w)))
+      (when (buffer-name buffer)
+        (set-window-buffer (window-at (nth 0 edges) (nth 1 edges))
+                         buffer)))))
 
 
 

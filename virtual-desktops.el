@@ -354,12 +354,19 @@ Window buffers are set."
     (let* ((w (car block)) ;;only one window in list, setting buffer.
            (edges (virtual-desktops-get-window-edges w))
            (buffer (virtual-desktops-get-window-buffer w))
-           (dedicated-flag (virtual-desktops-get-window-dedicated-flag w)))
+           (dedicated-flag (virtual-desktops-get-window-dedicated-flag w))
+           (created-window (window-at (nth 0 edges) (nth 1 edges))))
       (when (buffer-name buffer)
-        (set-window-buffer (window-at (nth 0 edges) (nth 1 edges))
-                         buffer)
-        (set-window-dedicated-p (window-at (nth 0 edges) (nth 1 edges))
-                                dedicated-flag)))))
+        (set-window-buffer created-window
+                           buffer)
+        (set-window-dedicated-p created-window
+                                dedicated-flag)
+        ;; check sr-speedbar:
+        (when (and (boundp 'sr-speedbar-buffer-name)
+                   (equal sr-speedbar-buffer-name
+                          (buffer-name buffer))
+                   sr-speedbar-window)
+          (setq sr-speedbar-window created-window))))))
 
 
 
@@ -393,6 +400,11 @@ Window buffers are set."
         (set-frame-size (selected-frame) (car frame) (nth 1 frame))
 
         ;;delete all windows
+        ;;manage speedbar window
+        (when (and (fboundp 'sr-speedbar-window-exist-p)
+                   (boundp 'sr-speedbar-window)
+                   (sr-speedbar-window-exist-p sr-speedbar-window))
+          (sr-speedbar-close))
         (delete-other-windows)
 
         ;;remove dedicated flag

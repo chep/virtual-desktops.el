@@ -88,7 +88,7 @@
 ;; window0 = minibuffer
 
 ;; window
-;; (buffer window-edges)
+;; (buffer window-edges dedicated-flag)
 
 ;; selected window = int
 
@@ -196,9 +196,17 @@
   "Return the y coordinate of bottom right corner of the window."
   (nth 3 (nth 1 window)))
 
+(defun virtual-desktops-get-window-edges (window)
+  "Return the buffer of a window."
+  (nth 1 window))
+
 (defun virtual-desktops-get-window-buffer (window)
   "Return the buffer of a window."
   (car window))
+
+(defun virtual-desktops-get-window-dedicated-flag (window)
+  "Return the buffer of a window."
+  (nth 2 window))
 
 (defun virtual-desktops-get-window-width (window)
   "Return the width of a window."
@@ -344,11 +352,14 @@ Window buffers are set."
                    (virtual-desktops-split-block (nth 1 result)))
           (error "No split found")))
     (let* ((w (car block)) ;;only one window in list, setting buffer.
-           (edges (nth 1 w))
-           (buffer (car w)))
+           (edges (virtual-desktops-get-window-edges w))
+           (buffer (virtual-desktops-get-window-buffer w))
+           (dedicated-flag (virtual-desktops-get-window-dedicated-flag w)))
       (when (buffer-name buffer)
         (set-window-buffer (window-at (nth 0 edges) (nth 1 edges))
-                         buffer)))))
+                         buffer)
+        (set-window-dedicated-p (window-at (nth 0 edges) (nth 1 edges))
+                                dedicated-flag)))))
 
 
 
@@ -360,7 +371,10 @@ Window buffers are set."
 
     ;;for each window, starting with minibuffer
     (dolist (window (window-list (selected-frame) t (minibuffer-window)))
-      (setq window-listv (cons (list (window-buffer window) (window-edges window)) window-listv)))
+      (setq window-listv (cons (list (window-buffer window)
+                                     (window-edges window)
+                                     (window-dedicated-p window))
+                               window-listv)))
 
   (list frame                              ;;frame
         (reverse window-listv)             ;;windows
@@ -380,6 +394,9 @@ Window buffers are set."
 
         ;;delete all windows
         (delete-other-windows)
+
+        ;;remove dedicated flag
+        (set-window-dedicated-p (selected-window) nil)
 
         ;;resize minibuffer
         (let ((mini (minibuffer-window))

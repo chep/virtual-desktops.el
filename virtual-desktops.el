@@ -437,7 +437,7 @@ Window buffers are set."
   (if (= virtual-desktops-current 0)
 	  (setq virtual-desktops-mode-line-string " (D nil) ")
 	  (setq virtual-desktops-mode-line-string (concat " (D " (number-to-string virtual-desktops-current) ") ")))
-  (force-mode-line-update)
+  (force-mode-line-update t)
 )
 
 (defun virtual-desktops-update-if-needed ()

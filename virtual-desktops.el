@@ -145,6 +145,15 @@
   	(,(kbd "C-c C-d g") . virtual-desktops-goto)
   	(,(kbd "C-c C-d l") . virtual-desktops-list)
   	(,(kbd "C-c C-d u") . virtual-desktops-update)
+  	(,(kbd "M-<kp-1>") . (lambda () (interactive) (virtual-desktops-goto 1)))
+  	(,(kbd "M-<kp-2>") . (lambda () (interactive) (virtual-desktops-goto 2)))
+  	(,(kbd "M-<kp-3>") . (lambda () (interactive) (virtual-desktops-goto 3)))
+  	(,(kbd "M-<kp-4>") . (lambda () (interactive) (virtual-desktops-goto 4)))
+  	(,(kbd "M-<kp-5>") . (lambda () (interactive) (virtual-desktops-goto 5)))
+  	(,(kbd "M-<kp-6>") . (lambda () (interactive) (virtual-desktops-goto 6)))
+  	(,(kbd "M-<kp-7>") . (lambda () (interactive) (virtual-desktops-goto 7)))
+  	(,(kbd "M-<kp-8>") . (lambda () (interactive) (virtual-desktops-goto 8)))
+  	(,(kbd "M-<kp-9>") . (lambda () (interactive) (virtual-desktops-goto 9)))
    )
    ;; Make mode global rather than buffer local
    :global 1

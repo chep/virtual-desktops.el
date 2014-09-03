@@ -145,6 +145,15 @@
   	(,(kbd "C-c C-d g") . virtual-desktops-goto)
   	(,(kbd "C-c C-d l") . virtual-desktops-list)
   	(,(kbd "C-c C-d u") . virtual-desktops-update)
+  	(,(kbd "M-<kp-1>") . (lambda () (interactive) (virtual-desktops-goto 1)))
+  	(,(kbd "M-<kp-2>") . (lambda () (interactive) (virtual-desktops-goto 2)))
+  	(,(kbd "M-<kp-3>") . (lambda () (interactive) (virtual-desktops-goto 3)))
+  	(,(kbd "M-<kp-4>") . (lambda () (interactive) (virtual-desktops-goto 4)))
+  	(,(kbd "M-<kp-5>") . (lambda () (interactive) (virtual-desktops-goto 5)))
+  	(,(kbd "M-<kp-6>") . (lambda () (interactive) (virtual-desktops-goto 6)))
+  	(,(kbd "M-<kp-7>") . (lambda () (interactive) (virtual-desktops-goto 7)))
+  	(,(kbd "M-<kp-8>") . (lambda () (interactive) (virtual-desktops-goto 8)))
+  	(,(kbd "M-<kp-9>") . (lambda () (interactive) (virtual-desktops-goto 9)))
    )
    ;; Make mode global rather than buffer local
    :global 1
@@ -565,7 +574,8 @@ virtual-desktops-auto-update is set."
 	  (if (not (active-minibuffer-window))
 		  (progn (unless dont-update
                    (virtual-desktops-update-if-needed))
-                 (setq virtual-desktops-current number)
+		   (if (< number (safe-length virtual-desktops-list))
+		       (setq virtual-desktops-current number))
 				 (virtual-desktops-restore virtual-desktops-current)
 				 (virtual-desktops-update-mode-line)))
 	  (message "virtual-desktops-mode must be enabled")))

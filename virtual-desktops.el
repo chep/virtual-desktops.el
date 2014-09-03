@@ -565,7 +565,8 @@ virtual-desktops-auto-update is set."
 	  (if (not (active-minibuffer-window))
 		  (progn (unless dont-update
                    (virtual-desktops-update-if-needed))
-                 (setq virtual-desktops-current number)
+		   (if (< number (safe-length virtual-desktops-list))
+		       (setq virtual-desktops-current number))
 				 (virtual-desktops-restore virtual-desktops-current)
 				 (virtual-desktops-update-mode-line)))
 	  (message "virtual-desktops-mode must be enabled")))

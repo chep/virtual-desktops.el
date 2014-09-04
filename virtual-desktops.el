@@ -139,29 +139,28 @@
   `(
     (,(kbd "C->") . virtual-desktops-next)
     (,(kbd "C-<") . virtual-desktops-prev)
-	(,(kbd "C-c C-d a") . virtual-desktops-add)
-  	(,(kbd "C-c C-d d") . virtual-desktops-del)
-  	(,(kbd "C-c C-d D") . virtual-desktops-del-specific)
-  	(,(kbd "C-c C-d g") . virtual-desktops-goto)
-  	(,(kbd "C-c C-d l") . virtual-desktops-list)
-  	(,(kbd "C-c C-d u") . virtual-desktops-update)
-   )
-   ;; Make mode global rather than buffer local
-   :global 1
+    (,(kbd "C-c C-d a") . virtual-desktops-add)
+    (,(kbd "C-c C-d d") . virtual-desktops-del)
+    (,(kbd "C-c C-d D") . virtual-desktops-del-specific)
+    (,(kbd "C-c C-d g") . virtual-desktops-goto)
+    (,(kbd "C-c C-d l") . virtual-desktops-list)
+    (,(kbd "C-c C-d u") . virtual-desktops-update)
+    )
+  ;; Make mode global rather than buffer local
+  :global 1
 
-   ;;initialize variables
-   (progn
-	 (setq virtual-desktops-list (list nil))
-	 (setq virtual-desktops-current 0)
-	 (if virtual-desktops-mode
-		 (setq virtual-desktops-mode-line-string " (D nil) ")
-	     (setq virtual-desktops-mode-line-string ""))
-	 (or global-mode-string
-		 (setq global-mode-string '("")))
-	 (or (memq 'virtual-desktops-mode-line-string global-mode-string)
-		 (setq global-mode-string
-			   (append global-mode-string '(virtual-desktops-mode-line-string)))))
-)
+  ;;initialize variables
+  (progn
+    (setq virtual-desktops-list (list nil))
+    (setq virtual-desktops-current 0)
+    (if virtual-desktops-mode
+        (setq virtual-desktops-mode-line-string " (D nil) ")
+      (setq virtual-desktops-mode-line-string ""))
+    (or global-mode-string
+        (setq global-mode-string '("")))
+    (or (memq 'virtual-desktops-mode-line-string global-mode-string)
+        (setq global-mode-string
+              (append global-mode-string '(virtual-desktops-mode-line-string))))))
 
 ;; Major mode for desktop list buffer
 (define-derived-mode virtual-desktops-list-mode
@@ -177,7 +176,7 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;								  Internal functions									;;
+;;                  Internal functions                  ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun virtual-desktops-get-window-xmin (window)
@@ -210,50 +209,47 @@
 
 (defun virtual-desktops-get-window-width (window)
   "Return the width of a window."
-  (- (virtual-desktops-get-window-xmax window) (virtual-desktops-get-window-xmin window))
-)
+  (- (virtual-desktops-get-window-xmax window) (virtual-desktops-get-window-xmin window)))
 
 (defun virtual-desktops-get-window-height (window)
   "Return the height of a window."
-  (- (virtual-desktops-get-window-ymax window) (virtual-desktops-get-window-ymin window))
-)
+  (- (virtual-desktops-get-window-ymax window) (virtual-desktops-get-window-ymin window)))
 
 ;; returns (block-xmin block-ymin block-xmax block-ymax block-width block-height)
 (defun virtual-desktops-get-block-dimensions (block)
   "Return the dimensions of a block of windows.
 return format: (block-xmin block-ymin block-xmax block-ymax block-width block-height)."
   (let (block-xmin block-ymin block-xmax block-ymax block-width block-height)
-	(dolist (window block)
-	  (progn (if (or (equal nil block-xmin)
-					 (< (virtual-desktops-get-window-xmin window) block-xmin))
-				 (setq block-xmin (virtual-desktops-get-window-xmin window)))
-			 (if (or (equal nil block-xmax)
-					 (> (virtual-desktops-get-window-xmax window) block-xmax))
-				 (setq block-xmax (virtual-desktops-get-window-xmax window)))
-			 (if (or (equal nil block-ymin)
-					 (< (virtual-desktops-get-window-ymin window) block-ymin))
-				 (setq block-ymin (virtual-desktops-get-window-ymin window)))
-			 (if (or (equal nil block-ymax)
-					 (> (virtual-desktops-get-window-ymax window) block-ymax))
-				 (setq block-ymax (virtual-desktops-get-window-ymax window)))))
-	(setq block-width (- block-xmax block-xmin))
-	(setq block-height (- block-ymax block-ymin))
+    (dolist (window block)
+      (progn (if (or (equal nil block-xmin)
+                     (< (virtual-desktops-get-window-xmin window) block-xmin))
+                 (setq block-xmin (virtual-desktops-get-window-xmin window)))
+             (if (or (equal nil block-xmax)
+                     (> (virtual-desktops-get-window-xmax window) block-xmax))
+                 (setq block-xmax (virtual-desktops-get-window-xmax window)))
+             (if (or (equal nil block-ymin)
+                     (< (virtual-desktops-get-window-ymin window) block-ymin))
+                 (setq block-ymin (virtual-desktops-get-window-ymin window)))
+             (if (or (equal nil block-ymax)
+                     (> (virtual-desktops-get-window-ymax window) block-ymax))
+                 (setq block-ymax (virtual-desktops-get-window-ymax window)))))
+    (setq block-width (- block-xmax block-xmin))
+    (setq block-height (- block-ymax block-ymin))
 
-	(list block-xmin block-ymin block-xmax block-ymax block-width block-height))
-)
+    (list block-xmin block-ymin block-xmax block-ymax block-width block-height)))
 
 (defun virtual-desktops-get-window (x y window-list)
   "Return the window located at (x, y) in window-list."
   (let ((window nil))
-	(catch 'break;
-	  (dolist (w window-list)
-		(if (and (>= x (virtual-desktops-get-window-xmin w))
+    (catch 'break;
+      (dolist (w window-list)
+        (if (and (>= x (virtual-desktops-get-window-xmin w))
                  (<= x (virtual-desktops-get-window-xmax w))
                  (>= y (virtual-desktops-get-window-ymin w))
                  (<= y (virtual-desktops-get-window-ymax w)))
             (progn (setq window w)
                    (throw 'break t)))))
-	window))
+    window))
 
 
 (defun virtual-desktops-split-block-vertically (block)
@@ -296,7 +292,7 @@ If no split was found, return nil."
                   (setq block-1 (cons w block-1))
                 (setq block-2 (cons w block-2))))
             (list block-1 block-2))
-	    nil))))
+        nil))))
 
 (defun virtual-desktops-split-block-horizontally (block)
   "Try to split horizontally the block.
@@ -323,7 +319,7 @@ If no split was found, return nil."
                 (when (= (virtual-desktops-get-window-xmax w-temp)
                          (virtual-desktops-get-window-xmax w-current)) ;; windows have same right side
                   (setq total-height (+ total-height
-                                       (virtual-desktops-get-window-height w-temp)))))) ;;add window height to total
+                                        (virtual-desktops-get-window-height w-temp)))))) ;;add window height to total
             (when (>= total-height block-height) ;;we can split
               (setq x (+ x (virtual-desktops-get-window-width w-current))) ;; we split here
               (throw 'break t))
@@ -338,7 +334,7 @@ If no split was found, return nil."
                   (setq block-1 (cons w block-1))
                 (setq block-2 (cons w block-2))))
             (list block-1 block-2))
-	    nil))))
+        nil))))
 
 (defun virtual-desktops-split-block (block)
   "Split the block until all blocks are composed of only one window.
@@ -383,10 +379,10 @@ Window buffers are set."
                                      (window-dedicated-p window))
                                window-listv)))
 
-  (list frame                              ;;frame
-        (reverse window-listv)             ;;windows
-        (list (nth 0 (window-edges))       ;;selected window x
-              (nth 1 (window-edges))))))   ;;selected window y
+    (list frame                              ;;frame
+          (reverse window-listv)             ;;windows
+          (list (nth 0 (window-edges))       ;;selected window x
+                (nth 1 (window-edges))))))   ;;selected window y
 
 ;;restore the desired desktop
 (defun virtual-desktops-restore (number)
@@ -426,19 +422,18 @@ Window buffers are set."
 (defun virtual-desktops-delete (number)
   "Delete a desktop if it is not the nil desktop."
   (if (and (< number (safe-length virtual-desktops-list))
-		   (> number 0))
-	  (setq virtual-desktops-list (delq (nth number virtual-desktops-list) virtual-desktops-list))
-	  (message (concat "Cant delete this desktop :" (number-to-string number))))
-)
+           (> number 0))
+      (setq virtual-desktops-list (delq (nth number virtual-desktops-list) virtual-desktops-list))
+    (message (concat "Cant delete this desktop :" (number-to-string number))))
+  )
 
 
 (defun virtual-desktops-update-mode-line ()
   "Update mode line."
   (if (= virtual-desktops-current 0)
-	  (setq virtual-desktops-mode-line-string " (D nil) ")
-	  (setq virtual-desktops-mode-line-string (concat " (D " (number-to-string virtual-desktops-current) ") ")))
-  (force-mode-line-update t)
-)
+      (setq virtual-desktops-mode-line-string " (D nil) ")
+    (setq virtual-desktops-mode-line-string (concat " (D " (number-to-string virtual-desktops-current) ") ")))
+  (force-mode-line-update t))
 
 (defun virtual-desktops-update-if-needed ()
   "Test if the desktop must be updated. It must be updated if
@@ -453,9 +448,9 @@ virtual-desktops-auto-update is set and if we are not in a new frame."
 The new list is returned."
   (let ((buffer-list "| "))
     (dolist (w (cdr (nth 1 desktop)))
-        (setq buffer-list (concat buffer-list
-                                  (buffer-name (car w))
-                                  " | ")))
+      (setq buffer-list (concat buffer-list
+                                (buffer-name (car w))
+                                " | ")))
     (append list-entries
             (list (list number (vector (number-to-string number) buffer-list))))))
 
@@ -470,44 +465,43 @@ The new list is returned."
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;								Interactive functions									;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                           Interactive functions                            ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun virtual-desktops-add (nb-desktops)
   "Create a new desktop with current window an buffer configuration."
   (interactive "P")
   (if virtual-desktops-mode
-	  (progn (setq virtual-desktops-list (append virtual-desktops-list (list (virtual-desktops-create-desktop))))
-			 (setq virtual-desktops-current (1- (safe-length virtual-desktops-list)))
+      (progn (setq virtual-desktops-list (append virtual-desktops-list (list (virtual-desktops-create-desktop))))
+             (setq virtual-desktops-current (1- (safe-length virtual-desktops-list)))
              (setq virtual-desktops-last-frame (selected-frame))
-			 (virtual-desktops-update-mode-line)
+             (virtual-desktops-update-mode-line)
              (when (and (integerp nb-desktops)
                         (> nb-desktops 1))
                (virtual-desktops-add (1- nb-desktops))))
-	  (message "virtual-desktops-mode must be enabled"))
-)
+    (message "virtual-desktops-mode must be enabled")))
 
 
 (defun virtual-desktops-update ()
   "Update current desktop with current window an buffer configuration."
   (interactive)
   (if virtual-desktops-mode
-	  (progn (if (not (= virtual-desktops-current 0))
-				 (let ((desktop (virtual-desktops-create-desktop)))
+      (progn (if (not (= virtual-desktops-current 0))
+                 (let ((desktop (virtual-desktops-create-desktop)))
                    (setq virtual-desktops-last-frame (selected-frame))
-				   (setcar (nthcdr virtual-desktops-current virtual-desktops-list) desktop))))
-  	  (message "virtual-desktops-mode must be enabled")))
+                   (setcar (nthcdr virtual-desktops-current virtual-desktops-list) desktop))))
+    (message "virtual-desktops-mode must be enabled")))
 
 (defun virtual-desktops-del ()
   "Delete current desktop."
   (interactive)
-    (if virtual-desktops-mode
-		(progn (virtual-desktops-delete virtual-desktops-current)
-			   (setq virtual-desktops-current 0)
-               (setq virtual-desktops-last-frame (selected-frame))
-			   (virtual-desktops-update-mode-line))
-	    (message "virtual-desktops-mode must be enabled")))
+  (if virtual-desktops-mode
+      (progn (virtual-desktops-delete virtual-desktops-current)
+             (setq virtual-desktops-current 0)
+             (setq virtual-desktops-last-frame (selected-frame))
+             (virtual-desktops-update-mode-line))
+    (message "virtual-desktops-mode must be enabled")))
 
 (defun virtual-desktops-del-specific (desktop)
   "Delete a specific desktop."
@@ -530,31 +524,29 @@ The new list is returned."
   "Go to next desktop."
   (interactive)
   (if virtual-desktops-mode
-	  (if (not (active-minibuffer-window))
-		  (progn (virtual-desktops-update-if-needed)
-				 (setq virtual-desktops-current (1+ virtual-desktops-current))
-				 (if (>= virtual-desktops-current (safe-length virtual-desktops-list))
-					 (setq virtual-desktops-current 0))
-				 (virtual-desktops-restore virtual-desktops-current)
-				 (virtual-desktops-update-mode-line))
-		  (message "pb minibuffer"))
-	  (message "virtual-desktops-mode must be enabled"))
-)
+      (if (not (active-minibuffer-window))
+          (progn (virtual-desktops-update-if-needed)
+                 (setq virtual-desktops-current (1+ virtual-desktops-current))
+                 (if (>= virtual-desktops-current (safe-length virtual-desktops-list))
+                     (setq virtual-desktops-current 0))
+                 (virtual-desktops-restore virtual-desktops-current)
+                 (virtual-desktops-update-mode-line))
+        (message "pb minibuffer"))
+    (message "virtual-desktops-mode must be enabled")))
 
 (defun virtual-desktops-prev ()
   "Go to previous desktop."
   (interactive)
   (if virtual-desktops-mode
-	  (if (not (active-minibuffer-window))
-		  (progn (virtual-desktops-update-if-needed)
-				 (setq virtual-desktops-current (1- virtual-desktops-current))
-				 (if (< virtual-desktops-current 0)
-					 (setq virtual-desktops-current (1- (safe-length virtual-desktops-list))))
-				 (virtual-desktops-restore virtual-desktops-current)
-				 (virtual-desktops-update-mode-line))
-		  (message "pb minibuffer"))
-	  (message "virtual-desktops-mode must be enabled"))
-)
+      (if (not (active-minibuffer-window))
+          (progn (virtual-desktops-update-if-needed)
+                 (setq virtual-desktops-current (1- virtual-desktops-current))
+                 (if (< virtual-desktops-current 0)
+                     (setq virtual-desktops-current (1- (safe-length virtual-desktops-list))))
+                 (virtual-desktops-restore virtual-desktops-current)
+                 (virtual-desktops-update-mode-line))
+        (message "pb minibuffer"))
+    (message "virtual-desktops-mode must be enabled")))
 
 (defun virtual-desktops-goto (number &optional dont-update)
   "Goto specific desktop.
@@ -562,20 +554,20 @@ If dont-update is not nil, current desktop won't be updated even if
 virtual-desktops-auto-update is set."
   (interactive "Ndesktop to display: ")
   (if virtual-desktops-mode
-	  (if (not (active-minibuffer-window))
-		  (progn (unless dont-update
+      (if (not (active-minibuffer-window))
+          (progn (unless dont-update
                    (virtual-desktops-update-if-needed))
-		   (if (< number (safe-length virtual-desktops-list))
-		       (setq virtual-desktops-current number))
-				 (virtual-desktops-restore virtual-desktops-current)
-				 (virtual-desktops-update-mode-line)))
-	  (message "virtual-desktops-mode must be enabled")))
+                 (if (< number (safe-length virtual-desktops-list))
+                     (setq virtual-desktops-current number))
+                 (virtual-desktops-restore virtual-desktops-current)
+                 (virtual-desktops-update-mode-line)))
+    (message "virtual-desktops-mode must be enabled")))
 
 (defun virtual-desktops-list ()
   "List all desktops."
   (interactive)
   (if virtual-desktops-mode
-	  (let ((buffer (get-buffer-create virtual-desktops-list-buffer-name)))
+      (let ((buffer (get-buffer-create virtual-desktops-list-buffer-name)))
         (switch-to-buffer buffer)
         (virtual-desktops-list-mode)
         (tabulated-list-print t))

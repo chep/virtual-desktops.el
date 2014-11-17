@@ -26,6 +26,7 @@
 ;; virtual-desktops-delete-specific: delete a specific desktop and select the
 ;;                                   nil desktop if you choose current
 ;;                                   desktop (C-c C-d D)
+;; virtual-desktops-swap:            swap current desktop with the previous one (circular) (C-c C-d s)
 ;; virtual-desktops-goto:            restore a specific desktop (C-c C-d g)
 ;; virtual-desktops-next:            go to next desktop (C->)
 ;; virtual-desktops-previous:        go to previous desktop (C-<)
@@ -141,6 +142,7 @@
     (,(kbd "C-<") . virtual-desktops-prev)
     (,(kbd "C-c C-d a") . virtual-desktops-add)
     (,(kbd "C-c C-d d") . virtual-desktops-del)
+    (,(kbd "C-c C-d s") . virtual-desktops-swap)
     (,(kbd "C-c C-d D") . virtual-desktops-del-specific)
     (,(kbd "C-c C-d g") . virtual-desktops-goto)
     (,(kbd "C-c C-d l") . virtual-desktops-list)
@@ -573,4 +575,17 @@ virtual-desktops-auto-update is set."
         (tabulated-list-print t))
     (message "virtual-desktops-mode must be enabled")))
 
+(defun virtual-desktops-swap()
+  "Swap current desktop with the previous one. If first desktop is selected, it is swapped with the last one."
+  (interactive)
+  (if virtual-desktops-mode
+      (when (/= virtual-desktops-current 0)
+        (let ((destination (1- virtual-desktops-current)))
+          (when (= destination 0)
+            (setq destination (1- (safe-length virtual-desktops-list))))
+          (cl-rotatef (elt virtual-desktops-list virtual-desktops-current)
+                      (elt virtual-desktops-list destination))
+          (setq virtual-desktops-current destination))
+        (virtual-desktops-update-mode-line))
+    (message "virtual-desktops-mode must be enabled")))
 ;;virtual-desktops.el ends here

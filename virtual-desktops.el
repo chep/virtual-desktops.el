@@ -127,6 +127,9 @@
 (defcustom virtual-desktops-auto-update "desktop auto update" "If non nil, current desktop will be updated when calling any virtual-desktops function."
   :type 'boolean
   :group 'virtual-desktop)
+(defcustom virtual-desktops-display-mode-line t "If non nil, current desktop number will be displayed in the mode-line"
+  :type 'boolean
+  :group 'virtual-desktop)
 
 
 ;; Custom Minor Mode
@@ -155,7 +158,7 @@
   (progn
     (setq virtual-desktops-list (list nil))
     (setq virtual-desktops-current 0)
-    (if virtual-desktops-mode
+    (if (and virtual-desktops-mode virtual-desktops-display-mode-line)
         (setq virtual-desktops-mode-line-string " (D nil) ")
       (setq virtual-desktops-mode-line-string ""))
     (or global-mode-string
@@ -432,9 +435,11 @@ Window buffers are set."
 
 (defun virtual-desktops-update-mode-line ()
   "Update mode line."
-  (if (= virtual-desktops-current 0)
-      (setq virtual-desktops-mode-line-string " (D nil) ")
-    (setq virtual-desktops-mode-line-string (concat " (D " (number-to-string virtual-desktops-current) ") ")))
+  (if virtual-desktops-display-mode-line
+      (if (= virtual-desktops-current 0)
+	  (setq virtual-desktops-mode-line-string " (D nil) ")
+	(setq virtual-desktops-mode-line-string (concat " (D " (number-to-string virtual-desktops-current) ") ")))
+    (setq virtual-desktops-mode-line-string ""))
   (force-mode-line-update t))
 
 (defun virtual-desktops-update-if-needed ()

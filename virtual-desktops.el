@@ -5,6 +5,7 @@
 ;; Description: allows you to save/retore a frame configuration: windows and buffers.
 ;; Author: Cédric Chépied <cedric.chepied@gmail.com>
 ;; Maintainer: Cédric Chépied
+;; Version: 1.0
 ;; Copyright (C) 2012 - 2014, Cédric Chépied
 ;; Last updated: Tue May 6th 16:45:46 CEST 2014
 ;;     By Cédric Chépied

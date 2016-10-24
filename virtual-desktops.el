@@ -6,8 +6,8 @@
 ;; Author: Cédric Chépied <cedric.chepied@gmail.com>
 ;; Maintainer: Cédric Chépied
 ;; Version: 1.0
-;; Copyright (C) 2012 - 2014, Cédric Chépied
-;; Last updated: Tue May 6th 16:45:46 CEST 2014
+;; Copyright (C) 2012 - 2016, Cédric Chépied
+;; Last updated: Mon Oct 24th 09:55:46 CEST 2016
 ;;     By Cédric Chépied
 ;;
 ;;
@@ -20,7 +20,7 @@
 ;;
 ;; Keys and interactive functions:
 ;; virtual-desktops-add:             save current configuration in a new virtual
-;;                                   desktop and select it (C-c C-d a). Use
+;;                                   desktop and select it (C-c C-d a).  Use
 ;;                                   prefix argument to create several desktops.
 ;; virtual-desktops-delete:          delete current desktop and select the nil
 ;;                                   desktop (C-c C-d d)
@@ -95,7 +95,7 @@
 ;; selected window = int
 
 
-(provide 'virtual-desktops)
+;;; Code:
 
 ;;constants
 (defconst virtual-desktops-list-buffer-name "##virtual-desktops##")
@@ -128,7 +128,7 @@
 (defcustom virtual-desktops-auto-update "desktop auto update" "If non nil, current desktop will be updated when calling any virtual-desktops function."
   :type 'boolean
   :group 'virtual-desktop)
-(defcustom virtual-desktops-display-mode-line t "If non nil, current desktop number will be displayed in the mode-line"
+(defcustom virtual-desktops-display-mode-line t "If non nil, current desktop number will be displayed in the mode-line."
   :type 'boolean
   :group 'virtual-desktop)
 
@@ -186,44 +186,44 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun virtual-desktops-get-window-xmin (window)
-  "Return the x coordinate of top left corner of the window."
+  "Return the x coordinate of top left corner of the WINDOW."
   (nth 0 (nth 1 window)))
 
 (defun virtual-desktops-get-window-xmax (window)
-  "Return the x coordinate of bottom right corner of the window."
+  "Return the x coordinate of bottom right corner of the WINDOW."
   (nth 2 (nth 1 window)))
 
 (defun virtual-desktops-get-window-ymin (window)
-  "Return the y coordinate of top left corner of the window."
+  "Return the y coordinate of top left corner of the WINDOW."
   (nth 1 (nth 1 window)))
 
 (defun virtual-desktops-get-window-ymax (window)
-  "Return the y coordinate of bottom right corner of the window."
+  "Return the y coordinate of bottom right corner of the WINDOW."
   (nth 3 (nth 1 window)))
 
 (defun virtual-desktops-get-window-edges (window)
-  "Return the buffer of a window."
+  "Return the buffer of a WINDOW."
   (nth 1 window))
 
 (defun virtual-desktops-get-window-buffer (window)
-  "Return the buffer of a window."
+  "Return the buffer of a WINDOW."
   (car window))
 
 (defun virtual-desktops-get-window-dedicated-flag (window)
-  "Return the buffer of a window."
+  "Return the buffer of a WINDOW."
   (nth 2 window))
 
 (defun virtual-desktops-get-window-width (window)
-  "Return the width of a window."
+  "Return the width of a WINDOW."
   (- (virtual-desktops-get-window-xmax window) (virtual-desktops-get-window-xmin window)))
 
 (defun virtual-desktops-get-window-height (window)
-  "Return the height of a window."
+  "Return the height of a WINDOW."
   (- (virtual-desktops-get-window-ymax window) (virtual-desktops-get-window-ymin window)))
 
 ;; returns (block-xmin block-ymin block-xmax block-ymax block-width block-height)
 (defun virtual-desktops-get-block-dimensions (block)
-  "Return the dimensions of a block of windows.
+  "Return the dimensions of a BLOCK of windows.
 return format: (block-xmin block-ymin block-xmax block-ymax block-width block-height)."
   (let (block-xmin block-ymin block-xmax block-ymax block-width block-height)
     (dolist (window block)
@@ -245,7 +245,7 @@ return format: (block-xmin block-ymin block-xmax block-ymax block-width block-he
     (list block-xmin block-ymin block-xmax block-ymax block-width block-height)))
 
 (defun virtual-desktops-get-window (x y window-list)
-  "Return the window located at (x, y) in window-list."
+  "Return the window located at (x (as X), y (as Y)) in window list (as WINDOW-LIST)."
   (let ((window nil))
     (catch 'break;
       (dolist (w window-list)
@@ -259,7 +259,7 @@ return format: (block-xmin block-ymin block-xmax block-ymax block-width block-he
 
 
 (defun virtual-desktops-split-block-vertically (block)
-  "Try to split vertically the block.
+  "Try to split vertically the BLOCK.
 In case of success, the return value is a list of two new blocks.
 If no split was found, return nil."
   (let* ((dimensions (virtual-desktops-get-block-dimensions block))
@@ -301,7 +301,7 @@ If no split was found, return nil."
         nil))))
 
 (defun virtual-desktops-split-block-horizontally (block)
-  "Try to split horizontally the block.
+  "Try to split horizontally the BLOCK.
 In case of success, the return value is a list of two new blocks.
 If no split was found, return nil."
   (let* ((dimensions (virtual-desktops-get-block-dimensions block))
@@ -343,7 +343,7 @@ If no split was found, return nil."
         nil))))
 
 (defun virtual-desktops-split-block (block)
-  "Split the block until all blocks are composed of only one window.
+  "Split the BLOCK until all blocks are composed of only one window.
 Window buffers are set."
   (if (> (safe-length block) 1)
       (let ((result (virtual-desktops-split-block-vertically block)))
@@ -367,6 +367,7 @@ Window buffers are set."
         (when (and (boundp 'sr-speedbar-buffer-name)
                    (equal sr-speedbar-buffer-name
                           (buffer-name buffer))
+                   (boundp 'sr-speedbar-window)
                    sr-speedbar-window)
           (setq sr-speedbar-window created-window))))))
 
@@ -392,7 +393,7 @@ Window buffers are set."
 
 ;;restore the desired desktop
 (defun virtual-desktops-restore (number)
-  "Restore the desired desktop."
+  "Restore the desired desktop NUMBER."
   (let ((desktop (nth number virtual-desktops-list)))
     (when desktop
       (let ((frame (car desktop))
@@ -404,6 +405,7 @@ Window buffers are set."
         ;;delete all windows
         ;;manage speedbar window
         (when (and (fboundp 'sr-speedbar-window-exist-p)
+                   (fboundp 'sr-speedbar-close)
                    (boundp 'sr-speedbar-window)
                    (sr-speedbar-window-exist-p sr-speedbar-window))
           (sr-speedbar-close))
@@ -426,7 +428,8 @@ Window buffers are set."
 
 ;;delete a desktop if it is not the nil desktop
 (defun virtual-desktops-delete (number)
-  "Delete a desktop if it is not the nil desktop."
+  "Delete a desktop if it is not the nil desktop.
+NUMBER: desktop to delete."
   (if (and (< number (safe-length virtual-desktops-list))
            (> number 0))
       (setq virtual-desktops-list (delq (nth number virtual-desktops-list) virtual-desktops-list))
@@ -444,8 +447,8 @@ Window buffers are set."
   (force-mode-line-update t))
 
 (defun virtual-desktops-update-if-needed ()
-  "Test if the desktop must be updated. It must be updated if
-virtual-desktops-auto-update is set and if we are not in a new frame."
+  "Test if the desktop must be updated.
+It must be updated if ‘virtual-desktops-auto-update’ is set and if we are not in a new frame."
   (when (and virtual-desktops-auto-update
              (or (equal nil virtual-desktops-last-frame)
                  (equal (selected-frame) virtual-desktops-last-frame)))
@@ -453,6 +456,9 @@ virtual-desktops-auto-update is set and if we are not in a new frame."
 
 (defun virtual-desktops-insert-desktop-entry (desktop list-entries number)
   "Insert a new entry for list buffer.
+DESKTOP: desktop to add.
+LIST-ENTRIES: list where to add DESKTOP.
+NUMBER: DESKTOP number.
 The new list is returned."
   (let ((buffer-list "| "))
     (dolist (w (cdr (nth 1 desktop)))
@@ -478,7 +484,8 @@ The new list is returned."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun virtual-desktops-add (nb-desktops)
-  "Create a new desktop with current window an buffer configuration."
+  "Create a new desktop with current window an buffer configuration.
+NB-DESKTOPS: number of desktops to add"
   (interactive "P")
   (if virtual-desktops-mode
       (progn (setq virtual-desktops-list (append virtual-desktops-list (list (virtual-desktops-create-desktop))))
@@ -512,7 +519,7 @@ The new list is returned."
     (message "virtual-desktops-mode must be enabled")))
 
 (defun virtual-desktops-del-specific (desktop)
-  "Delete a specific desktop."
+  "Delete a specific DESKTOP."
   (interactive "Ndesktop to delete: ")
   (if virtual-desktops-mode
       (when (and (< desktop (safe-length virtual-desktops-list))
@@ -557,9 +564,9 @@ The new list is returned."
     (message "virtual-desktops-mode must be enabled")))
 
 (defun virtual-desktops-goto (number &optional dont-update)
-  "Goto specific desktop.
-If dont-update is not nil, current desktop won't be updated even if
-virtual-desktops-auto-update is set."
+  "Goto desktop NUMBER.
+If DONT-UPDATE is not nil, current desktop won't be updated even if
+‘virtual-desktops-auto-update’ is set."
   (interactive "Ndesktop to display: ")
   (if virtual-desktops-mode
       (if (not (active-minibuffer-window))
@@ -594,4 +601,6 @@ virtual-desktops-auto-update is set."
           (setq virtual-desktops-current destination))
         (virtual-desktops-update-mode-line))
     (message "virtual-desktops-mode must be enabled")))
-;;virtual-desktops.el ends here
+
+(provide 'virtual-desktops)
+;;; virtual-desktops.el ends here

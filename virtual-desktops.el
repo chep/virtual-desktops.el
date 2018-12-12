@@ -258,11 +258,13 @@ return format: (block-xmin block-ymin block-xmax block-ymax block-width block-he
     window))
 
 
-(defun virtual-desktops-split-block-vertically (block)
+(defun virtual-desktops-split-block-vertically (frame block)
   "Try to split vertically the BLOCK.
 In case of success, the return value is a list of two new blocks.
 If no split was found, return nil."
   (let* ((dimensions (virtual-desktops-get-block-dimensions block))
+         (divx (/ (car frame) (float (frame-width)))) ;;divx = Xold / Xnew
+         (divy (/ (nth 1 frame) (float (frame-height)))) ;;divy = Yold / Ynew
          (block-xmin (nth 0 dimensions))
          (block-ymin (nth 1 dimensions))
          (block-xmax (nth 2 dimensions))
@@ -271,7 +273,7 @@ If no split was found, return nil."
          (block-height (nth 5 dimensions)))
 
     ;;select window to split
-    (select-window (window-at block-xmin block-ymin))
+    (select-window (window-at (ceiling (/ block-xmin divx)) (ceiling (/ block-ymin divy))))
 
     (let ((y (1+ block-ymin)))
       (catch 'break
@@ -292,7 +294,7 @@ If no split was found, return nil."
       ;;if we found a split, we split and return 2 blocks
       (if (< y block-ymax)
           (let (block-1 block-2)
-            (split-window-vertically (1- (- y block-ymin)))
+            (split-window-vertically (floor (1- (/ (- y block-ymin) divy))))
             (dolist (w block)
               (if (< (virtual-desktops-get-window-ymax w) y)
                   (setq block-1 (cons w block-1))
@@ -300,11 +302,13 @@ If no split was found, return nil."
             (list block-1 block-2))
         nil))))
 
-(defun virtual-desktops-split-block-horizontally (block)
+(defun virtual-desktops-split-block-horizontally (frame block)
   "Try to split horizontally the BLOCK.
 In case of success, the return value is a list of two new blocks.
 If no split was found, return nil."
   (let* ((dimensions (virtual-desktops-get-block-dimensions block))
+         (divx (/ (car frame) (float (frame-width)))) ;;divx = Xold / Xnew
+         (divy (/ (nth 1 frame) (float (frame-height)))) ;;divy = Yold / Ynew
          (block-xmin (nth 0 dimensions))
          (block-ymin (nth 1 dimensions))
          (block-xmax (nth 2 dimensions))
@@ -313,7 +317,7 @@ If no split was found, return nil."
          (block-height (nth 5 dimensions)))
 
     ;;select window to split
-    (select-window (window-at block-xmin block-ymin))
+    (select-window (window-at (ceiling (/ block-xmin divx)) (ceiling (/ block-ymin divy))))
 
     (let ((x (1+ block-xmin)))
       (catch 'break
@@ -334,7 +338,7 @@ If no split was found, return nil."
       ;;if we found a split, we split and return 2 blocks
       (if (< x block-xmax)
           (let (block-1 block-2)
-            (split-window-horizontally (1- (- x block-xmin)))
+            (split-window-horizontally (floor (1- (/ (- x block-xmin) divx))))
             (dolist (w block)
               (if (< (virtual-desktops-get-window-xmax w) x)
                   (setq block-1 (cons w block-1))
@@ -342,22 +346,24 @@ If no split was found, return nil."
             (list block-1 block-2))
         nil))))
 
-(defun virtual-desktops-split-block (block)
+(defun virtual-desktops-split-block (frame block)
   "Split the BLOCK until all blocks are composed of only one window.
 Window buffers are set."
   (if (> (safe-length block) 1)
-      (let ((result (virtual-desktops-split-block-vertically block)))
+      (let ((result (virtual-desktops-split-block-vertically frame block)))
         (unless result
-          (setq result (virtual-desktops-split-block-horizontally block)))
+          (setq result (virtual-desktops-split-block-horizontally frame block)))
         (if result
-            (progn (virtual-desktops-split-block (car result))
-                   (virtual-desktops-split-block (nth 1 result)))
+            (progn (virtual-desktops-split-block frame (car result))
+                   (virtual-desktops-split-block frame (nth 1 result)))
           (error "No split found")))
     (let* ((w (car block)) ;;only one window in list, setting buffer.
+           (divx (/ (car frame) (float (frame-width)))) ;;divx = Xold / Xnew
+           (divy (/ (nth 1 frame) (float (frame-height)))) ;;divy = Yold / Ynew
            (edges (virtual-desktops-get-window-edges w))
            (buffer (virtual-desktops-get-window-buffer w))
            (dedicated-flag (virtual-desktops-get-window-dedicated-flag w))
-           (created-window (window-at (nth 0 edges) (nth 1 edges))))
+           (created-window (window-at (ceiling (1+ (/ (nth 0 edges) divx))) (ceiling (1+ (/ (nth 1 edges) divy))))))
       (when (buffer-name buffer)
         (set-window-buffer created-window
                            buffer)
@@ -397,10 +403,8 @@ Window buffers are set."
   (let ((desktop (nth number virtual-desktops-list)))
     (when desktop
       (let ((frame (car desktop))
-            (window-listv (nth 1 desktop))
-            (select (nth 2 desktop)))
-        ;;resize frame
-        (set-frame-size (selected-frame) (car frame) (nth 1 frame))
+             (window-listv (nth 1 desktop))
+             (select (nth 2 desktop)))
 
         ;;delete all windows
         ;;manage speedbar window
@@ -421,7 +425,7 @@ Window buffers are set."
                                  (window-height mini))))
 
         ;;let's split windows
-        (virtual-desktops-split-block (cdr window-listv))
+        (virtual-desktops-split-block frame (cdr window-listv))
         (select-window (window-at (car select) (nth 1 select))))
       (setq virtual-desktops-last-frame (selected-frame)))))
 

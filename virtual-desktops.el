@@ -396,6 +396,9 @@ Window buffers are set."
   "Restore the desired desktop NUMBER."
   (let ((desktop (nth number virtual-desktops-list)))
     (when desktop
+	  (when (fboundp 'treemacs-current-visibility)
+		(when (equal (treemacs-current-visibility) 'visible)
+		  (treemacs)))
       (let ((frame (car desktop))
             (window-listv (nth 1 desktop))
             (select (nth 2 desktop)))

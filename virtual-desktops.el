@@ -134,6 +134,7 @@
 
 
 ;; Custom Minor Mode
+;;;###autoload
 (define-minor-mode virtual-desktops-mode
   "Enable desktops creation which save or restore windows and buffers of the frame."
   ;; The initial value - Set to 1 to enable by default
